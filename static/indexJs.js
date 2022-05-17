@@ -9,7 +9,7 @@ function thingToString(string) {
     return x;
 }
 
-fetch("{{ url_for('static', filename='drinkList.json') }}")
+fetch("/static/drinkList.json")
     .then(response => response.json())
     .then(data => {
         const drinkHtml = data.map(obj => {
@@ -24,15 +24,19 @@ fetch("{{ url_for('static', filename='drinkList.json') }}")
             const nameString = thingToString(newName)
             const linkName = name.replace('&', 'and');
             const makeLink = `<a href="/wait?drink=${linkName}" class="makerLink">Make me!</a>`;
-            const deleteLink = `<a href="#" class="deleteLink" id="deleteLink" onclick="delDrinkLink(${nameString})">Delete this drink</a>`;
-
-            document.getElementById('deleteLink').addEventListener("click", function(event) {
-                event.preventDefault();
-                delDrinkLink(newName);
-            })
-
+            const deleteLink = `<a href="#" class="deleteLink" onclick="delDrinkLink(${nameString})">Delete this drink</a>`;
+            
             return `<div class="drink"><p>${nHtml}</p><p>${iHtml}</p>${makeLink}<br>${deleteLink}</div>`;
         }).join('');
+        
+        
+        document.querySelectorAll("a.deleteLink").forEach(function(element) {
+            element.addEventListener("click", function(event) {
+                event.preventDefault();
+                delDrinkLink(newName);
+            });
+        });
+        
         var newDrinkLink = `<a href='/addDrink' class='newDrink'>Add a drink</a>`;
         const html = newDrinkLink + drinkHtml;
         document.querySelector('#main').innerHTML = html;  
