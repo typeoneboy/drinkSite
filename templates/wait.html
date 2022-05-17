@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Making your drink</title>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <meta name="viewport" content="initial-scale=1.0 width=device-width" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+        <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+    </head>
+    <body onload="makeDrink()">
+        <script type="text/javascript" lang="javascript">
+            function makeDrink() {
+                var link = window.location.href;
+                var splitNum = link.search("drink=");
+                if (splitNum == -1) {
+                    alert('splitNum is -1')
+                } else {
+                    var drinkName = link.slice((splitNum + 6))
+                };
+                var request = new XMLHttpRequest();
+                request.open('POST', `/wait?drink=${drinkName}`);
+
+                request.onload = function() {
+                    if (request.status == 200 && request.responseText == 'done') {
+                        window.location = '/';
+                    } else {
+                        alert('Something went wrong');
+                    }
+                };
+
+                request.onerror = function() {
+                    alert("Oops,  we've had an error.");
+                };
+
+                request.send()
+            }
+        </script>
+        <div class="centeredInPage">
+            <h1>Your drink should be being poured. Please do not exit or refresh this page.</h1>
+            <h2>When your drink is poured, you will be automatically redirected back to the menu page.</h2>
+        </div>
+    </body>
+</html>

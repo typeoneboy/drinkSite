@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Making your drink</title>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <meta name="viewport" content="initial-scale=1.0 width=device-width" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+        <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+    </head>
+    <body>
+        <div class="main">
+            <form id="addDrinkForm">
+                <div id="itemRows">
+                    <div id="rowNum1">
+                        <label for="name">Name: </label>
+                        <input type="text" id="name" name="name" class="newDrinkName" /> <br>
+                        <label for="ingredient">Ingredient: </label>
+                        <select name="ingredient1" id="ingredient" title="Ingredient">
+                        </select>
+                        <label for="amount">Amount (mls): </label>
+                        <input type="text" id="amount" name="amount1" class="ingAmount" value='0'/> <br>
+                        <input type="button" onclick="combFunc(this.form);" value="Add another ingredient" class="addRowBtn"/><br>
+                    </div>
+                </div>
+                <input type="submit" value="Add Drink" class="addDrinkBtn"/>
+            </form>
+        </div>
+        <script type="text/javascript">
+            var rowNum = 1;
+            function addRow(frm) {
+                rowNum++;
+
+                //create main row div
+                rowDiv = document.createElement('div');
+                rowDiv.id = `rowNum${rowNum}`;
+
+                //create ingredient name label
+                ingNameLabel = document.createElement('label');
+                ingNameLabel.for = "ing";
+                ingNameLabelText = document.createTextNode(`Ingredient ${rowNum}: `);
+                ingNameLabel.appendChild(ingNameLabelText);
+                ingNameLabel.setAttribute('class', 'ingNameLabel');
+
+                rowDiv.appendChild(ingNameLabel);
+
+                //create select
+                ingSelect = document.createElement('select');
+                ingSelect.id = "ingredient";
+                ingSelect.name = `ingredient${rowNum}`;
+
+                rowDiv.appendChild(ingSelect);
+
+                //create amount label
+                ingAmountLabel = document.createElement('label');
+                ingAmountLabel.for = "amount";
+                ingAmountLabelText = document.createTextNode("Amount (mls): ");
+                ingAmountLabel.appendChild(ingAmountLabelText);
+                ingAmountLabel.setAttribute('class', 'ingAmountLabel')
+
+                rowDiv.appendChild(ingAmountLabel);
+
+                //create amount input
+                ingAmountInput = document.createElement('input');
+                ingAmountInput.type="text";
+                ingAmountInput.id = "amount";
+                ingAmountInput.name = `amount${rowNum}`;
+                ingAmountInput.setAttribute('class', 'ingAmountInput')
+                ingAmountInput.value = '0';
+
+                rowDiv.appendChild(ingAmountInput);
+                rowDiv.appendChild(document.createElement('br'));
+
+                //create add row button
+                addRowBtn = document.createElement('input');
+                addRowBtn.type = "button";
+                //addRowBtn.class = "addRowBtn";
+                addRowBtn.setAttribute('class', 'addRowBtn');
+                addRowBtn.value = 'Add another ingredient';
+                addRowBtn.setAttribute('onclick', 'combFunc(this.form);');
+
+                rowDiv.appendChild(addRowBtn);
+                rowDiv.appendChild(document.createElement('br'));
+
+                //create remove row button
+                removeRowBtn = document.createElement('input');
+                removeRowBtn.type = "button";
+                //removeRowBtn.onclick = `removeRow(${rowNum})`;
+                removeRowBtn.value = 'Remove row';
+                //removeRowBtn.class = "removeRowBtn";
+                removeRowBtn.setAttribute('class', 'removeRowBtn');
+                removeRowBtn.setAttribute('onclick', `removeRow(${rowNum});`)
+
+                rowDiv.appendChild(removeRowBtn);
+                rowDiv.appendChild(document.createElement('br'));
+
+                document.querySelector("div#itemRows").appendChild(rowDiv);
+            };
+
+            function removeRow(rowNumber) {
+                const div = document.getElementById(`rowNum${rowNumber}`);
+                div.parentElement.removeChild(div);
+                rowNum -= 1;
+            };
+
+            function addDrink() {
+                const request = new XMLHttpRequest();
+                const FD = new FormData(form);
+                
+                const ingNumsArr = [];
+
+                Array.from(form.elements).forEach(element => {
+                    if (element.name.includes("ingredient") && !element.value.includes("Add another")) {
+                        var ingNumStr = element.name.slice(-1);
+                        console.log(element.name)
+                        console.log("ingnumstr: " + ingNumStr)
+                        var ingNum = parseInt(ingNumStr);
+                        ingNumsArr.push(ingNum);
+                    };
+                });
+
+                const numOfIngs = Math.max.apply(Math, ingNumsArr).toString();
+                console.log(ingNumsArr)
+
+                request.onload = function() {
+                    if (request.status == 200 && request.responseText == 'done') {
+                        window.location = '/';
+                    } else {
+                        alert('Something went wrong');
+                    }
+                };
+
+                request.onerror = function() {
+                    alert("Oops, we've had an error.");
+                };
+
+                request.open('POST', `/addDrink?numIngs=${numOfIngs}`);
+                request.send(FD);
+            };
+
+            const form = document.getElementById("addDrinkForm");
+
+            form.addEventListener("submit", function( event ) {
+                event.preventDefault();
+                console.log('adding drink')
+                addDrink();
+            });
+
+            fetch("{{ url_for('static', filename='drinkOptions.json') }}")
+                .then(response => response.json())
+                .then(data => {
+                    const optionHtml = data.map(obj => {
+                        const { name, value } = obj;
+                        return `<option value=${value}>${name}</option>`;
+                    }).join('');
+
+                    document.querySelectorAll("select#ingredient").forEach(function(element) {
+                        element.innerHTML = optionHtml;
+                    });
+                   
+                });
+            
+            function loadIngSelectOptions() {
+                fetch("{{ url_for('static', filename='drinkOptions.json') }}")
+                .then(response => response.json())
+                .then(data => {
+                    const optionHtml = data.map(obj => {
+                        const { name, value } = obj;
+                        return `<option value=${value}>${name}</option>`;
+                    }).join('');
+
+                    document.querySelectorAll("select#ingredient").forEach(function(element) {
+                        element.innerHTML = optionHtml;
+                    });
+
+                });
+            };
+
+            function combFunc(frm) {
+                addRow(frm);
+                loadIngSelectOptions();
+            };
+        </script>
+    </body>
+</html>
